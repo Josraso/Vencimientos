@@ -1,0 +1,60 @@
+POST data: Array
+(
+    [action] => reset_database
+    [clientes] => true
+    [servicios] => true
+    [servicios_cliente] => true
+    [albaranes] => true
+    [notificaciones] => true
+)
+
+Flags: clientes=, servicios=, servicios_cliente=, albaranes=, notificaciones=
+Resultado: No se seleccionó nada para eliminar
+POST data: Array
+(
+    [action] => reset_database
+    [clientes] => true
+    [servicios] => true
+    [servicios_cliente] => true
+    [albaranes] => true
+    [notificaciones] => true
+)
+
+Flags: clientes=, servicios=, servicios_cliente=, albaranes=, notificaciones=
+Resultado: No se seleccionó nada para eliminar
+POST data: Array
+(
+    [action] => reset_database
+    [clientes] => true
+    [servicios] => true
+    [servicios_cliente] => true
+    [albaranes] => true
+    [notificaciones] => true
+)
+
+Flags: clientes=, servicios=, servicios_cliente=, albaranes=, notificaciones=
+Resultado: No se seleccionó nada para eliminar
+POST data: Array
+(
+    [action] => reset_database
+    [clientes] => true
+    [servicios] => true
+    [servicios_cliente] => true
+    [albaranes] => true
+    [notificaciones] => true
+)
+
+Flags: clientes=1, servicios=1, servicios_cliente=1, albaranes=1, notificaciones=1
+Resultado: Eliminados: notificaciones (0 filas), albaranes (0 albaranes, 0 líneas), servicios de clientes (0 filas), clientes (0 filas), tipos de servicios (10 filas)
+POST data: Array
+(
+    [action] => reset_database
+    [clientes] => true
+    [servicios] => true
+    [servicios_cliente] => true
+    [albaranes] => true
+    [notificaciones] => true
+)
+
+Flags: clientes=1, servicios=1, servicios_cliente=1, albaranes=1, notificaciones=1
+Resultado: Eliminados: notificaciones (0 filas), albaranes (0 albaranes, 0 líneas), servicios de clientes (0 filas), clientes (0 filas), tipos de servicios (5 filas)
