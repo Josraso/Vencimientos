@@ -1,0 +1,249 @@
+-- Base de datos completa para gestión de servicios y vencimientos
+-- VERSIÓN PARA PRODUCCIÓN - SIN DATOS DE EJEMPLO
+-- Ejecutar todo de una vez para nuevas instalaciones
+
+DROP DATABASE IF EXISTS vencidos;
+CREATE DATABASE vencidos CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE vencidos;
+
+-- Tabla de clientes
+CREATE TABLE clientes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    apellidos VARCHAR(150) NOT NULL,
+    telefono VARCHAR(20),
+    empresa VARCHAR(150),
+    email VARCHAR(100) NOT NULL,
+    direccion TEXT,
+    ciudad VARCHAR(100),
+    codigo_postal VARCHAR(10),
+    activo BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_email (email),
+    INDEX idx_activo (activo)
+) ENGINE=InnoDB;
+
+-- Tabla de tipos de servicios
+CREATE TABLE tipos_servicios (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    descripcion TEXT,
+    precio DECIMAL(10,2) NOT NULL,
+    activo BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_activo (activo)
+) ENGINE=InnoDB;
+
+-- Tabla de tipos de vencimiento
+CREATE TABLE tipos_vencimiento (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(50) NOT NULL,
+    dias INT NOT NULL,
+    activo BOOLEAN DEFAULT TRUE
+) ENGINE=InnoDB;
+
+-- Tabla de servicios contratados por clientes
+CREATE TABLE servicios_cliente (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    cliente_id INT NOT NULL,
+    tipo_servicio_id INT NOT NULL,
+    tipo_vencimiento_id INT NOT NULL,
+    fecha_inicio DATE NOT NULL,
+    fecha_proximo_vencimiento DATE NOT NULL,
+    precio_personalizado DECIMAL(10,2) NULL,
+    activo BOOLEAN DEFAULT TRUE,
+    observaciones TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE,
+    FOREIGN KEY (tipo_servicio_id) REFERENCES tipos_servicios(id),
+    FOREIGN KEY (tipo_vencimiento_id) REFERENCES tipos_vencimiento(id),
+    INDEX idx_vencimiento (fecha_proximo_vencimiento),
+    INDEX idx_activo (activo),
+    INDEX idx_cliente (cliente_id)
+) ENGINE=InnoDB;
+
+-- Tabla de configuración del sistema
+CREATE TABLE configuracion (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    clave VARCHAR(50) NOT NULL UNIQUE,
+    valor TEXT NOT NULL,
+    descripcion TEXT
+) ENGINE=InnoDB;
+
+-- Tabla de albaranes generados
+CREATE TABLE albaranes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    numero_albaran VARCHAR(20) NOT NULL UNIQUE,
+    cliente_id INT NOT NULL,
+    fecha_albaran DATE NOT NULL,
+    total DECIMAL(10,2) NOT NULL,
+    observaciones TEXT,
+    estado ENUM('borrador', 'generado', 'enviado', 'pagado') DEFAULT 'borrador',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (cliente_id) REFERENCES clientes(id),
+    INDEX idx_fecha (fecha_albaran),
+    INDEX idx_cliente (cliente_id)
+) ENGINE=InnoDB;
+
+-- Tabla de líneas de albarán
+CREATE TABLE albaran_lineas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    albaran_id INT NOT NULL,
+    servicio_cliente_id INT NOT NULL,
+    descripcion VARCHAR(255) NOT NULL,
+    cantidad INT DEFAULT 1,
+    precio_unitario DECIMAL(10,2) NOT NULL,
+    total_linea DECIMAL(10,2) NOT NULL,
+    FOREIGN KEY (albaran_id) REFERENCES albaranes(id) ON DELETE CASCADE,
+    FOREIGN KEY (servicio_cliente_id) REFERENCES servicios_cliente(id)
+) ENGINE=InnoDB;
+
+-- Tabla de notificaciones enviadas
+CREATE TABLE notificaciones_enviadas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    servicio_cliente_id INT NOT NULL,
+    fecha_envio DATETIME DEFAULT CURRENT_TIMESTAMP,
+    tipo_notificacion VARCHAR(50) DEFAULT 'vencimiento',
+    FOREIGN KEY (servicio_cliente_id) REFERENCES servicios_cliente(id),
+    INDEX idx_fecha (fecha_envio),
+    INDEX idx_servicio (servicio_cliente_id)
+) ENGINE=InnoDB;
+
+-- DATOS ESENCIALES DEL SISTEMA (Solo lo indispensable)
+
+-- Insertar tipos de servicios básicos (editables desde la interfaz)
+INSERT INTO tipos_servicios (nombre, descripcion, precio) VALUES
+('Mantenimiento Web', 'Servicio de mantenimiento web mensual completo', 50.00),
+('Hosting Premium', 'Servicio de hosting y dominio premium', 120.00),
+('Desarrollo Web', 'Desarrollo de páginas web personalizadas', 800.00),
+('SEO Básico', 'Posicionamiento SEO básico mensual', 75.00),
+('Soporte Técnico', 'Soporte técnico especializado', 60.00);
+
+-- Insertar tipos de vencimiento estándar
+INSERT INTO tipos_vencimiento (nombre, dias) VALUES
+('1 Mes', 30),
+('2 Meses', 60),
+('3 Meses', 90),
+('6 Meses', 180),
+('Anual', 365);
+
+-- Configuración inicial del sistema (EDITAR SEGÚN TU EMPRESA)
+INSERT INTO configuracion (clave, valor, descripcion) VALUES
+('dias_aviso', '7', 'Días antes del vencimiento para enviar aviso'),
+('email_admin', 'admin@tudominio.com', 'Email principal para recibir avisos'),
+('emails_copia', '', 'Emails adicionales separados por comas'),
+('smtp_host', 'smtp.gmail.com', 'Servidor SMTP'),
+('smtp_port', '587', 'Puerto SMTP'),
+('smtp_user', '', 'Usuario SMTP (configúralo en el sistema)'),
+('smtp_pass', '', 'Contraseña SMTP (configúralo en el sistema)'),
+('siguiente_albaran', '1', 'Próximo número de albarán'),
+('empresa_nombre', 'Tu Empresa S.L.', 'Nombre de tu empresa'),
+('empresa_direccion', 'Calle Ejemplo, 123', 'Dirección de la empresa'),
+('empresa_ciudad', 'Tu Ciudad', 'Ciudad de la empresa'),
+('empresa_codigo_postal', '12345', 'Código postal de la empresa'),
+('empresa_telefono', '666 123 456', 'Teléfono de la empresa'),
+('empresa_email', 'info@tuempresa.com', 'Email de la empresa'),
+('empresa_cif', 'B12345678', 'CIF/NIF de la empresa'),
+('empresa_web', 'www.tuempresa.com', 'Web de la empresa'),
+('empresa_logo', '', 'URL del logo (opcional)');
+
+-- Vista útil para consultas frecuentes
+CREATE VIEW vista_servicios_activos AS
+SELECT 
+    c.id as cliente_id,
+    c.nombre,
+    c.apellidos,
+    c.empresa,
+    c.email,
+    c.telefono,
+    sc.id as servicio_id,
+    ts.nombre as servicio_nombre,
+    ts.descripcion as servicio_descripcion,
+    COALESCE(sc.precio_personalizado, ts.precio) as precio_final,
+    sc.fecha_inicio,
+    sc.fecha_proximo_vencimiento,
+    tv.nombre as tipo_vencimiento,
+    DATEDIFF(sc.fecha_proximo_vencimiento, CURDATE()) as dias_hasta_vencimiento,
+    sc.observaciones
+FROM servicios_cliente sc
+JOIN clientes c ON sc.cliente_id = c.id
+JOIN tipos_servicios ts ON sc.tipo_servicio_id = ts.id  
+JOIN tipos_vencimiento tv ON sc.tipo_vencimiento_id = tv.id
+WHERE sc.activo = 1 AND c.activo = 1;
+
+-- Procedimiento para renovar servicios vencidos automáticamente
+DELIMITER //
+CREATE PROCEDURE RenovarServiciosVencidos()
+BEGIN
+    UPDATE servicios_cliente sc
+    JOIN tipos_vencimiento tv ON sc.tipo_vencimiento_id = tv.id
+    SET sc.fecha_proximo_vencimiento = DATE_ADD(sc.fecha_proximo_vencimiento, INTERVAL tv.dias DAY)
+    WHERE sc.fecha_proximo_vencimiento < CURDATE() 
+    AND sc.activo = 1;
+    
+    SELECT ROW_COUNT() as servicios_renovados;
+END //
+DELIMITER ;
+
+-- Función para obtener próximos vencimientos
+DELIMITER //
+CREATE FUNCTION ProximosVencimientos(dias_limite INT)
+RETURNS INT
+READS SQL DATA
+DETERMINISTIC
+BEGIN
+    DECLARE total INT DEFAULT 0;
+    
+    SELECT COUNT(*) INTO total
+    FROM vista_servicios_activos
+    WHERE dias_hasta_vencimiento <= dias_limite AND dias_hasta_vencimiento >= 0;
+    
+    RETURN total;
+END //
+DELIMITER ;
+
+-- Triggers para actualizar fechas de modificación
+DELIMITER //
+CREATE TRIGGER actualizar_cliente_modificado
+BEFORE UPDATE ON clientes
+FOR EACH ROW
+BEGIN
+    SET NEW.updated_at = CURRENT_TIMESTAMP;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE TRIGGER actualizar_servicio_modificado
+BEFORE UPDATE ON servicios_cliente
+FOR EACH ROW
+BEGIN
+    SET NEW.updated_at = CURRENT_TIMESTAMP;
+END //
+DELIMITER ;
+
+-- Mostrar estadísticas iniciales (estará en 0 porque no hay datos)
+SELECT 
+    'Clientes registrados' as concepto, 
+    COUNT(*) as cantidad 
+FROM clientes WHERE activo = 1
+UNION ALL
+SELECT 
+    'Tipos de servicios disponibles' as concepto, 
+    COUNT(*) as cantidad 
+FROM tipos_servicios WHERE activo = 1
+UNION ALL
+SELECT 
+    'Servicios activos contratados' as concepto, 
+    COUNT(*) as cantidad 
+FROM servicios_cliente WHERE activo = 1
+UNION ALL
+SELECT 
+    'Albaranes generados' as concepto, 
+    COUNT(*) as cantidad 
+FROM albaranes;
+
+SELECT '✅ BASE DE DATOS PARA PRODUCCIÓN CREADA CORRECTAMENTE' as estado;
+SELECT '🚀 Sistema listo para usar - Configura tu empresa en la pestaña Configuración' as mensaje;
+SELECT '📋 Próximos pasos: 1) Configurar empresa 2) Configurar SMTP 3) Añadir clientes' as instrucciones;
